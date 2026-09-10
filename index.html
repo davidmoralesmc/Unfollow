@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>followback.</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0c;
+            --card-bg: #16161a;
+            --card-border: #26262b;
+            --text-primary: #f3f3f5;
+            --text-secondary: #8e8e93;
+            --accent-color: #2997ff;
+            --accent-hover: #0077ed;
+            --accent-light: rgba(41, 151, 255, 0.1);
+            --danger-color: #ff453a;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+            --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-stack);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 680px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        p.subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Zonas de Carga */
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .upload-box {
+            border: 2px dashed var(--card-border);
+            border-radius: var(--radius-md);
+            padding: 24px 16px;
+            text-align: center;
+            position: relative;
+            background: rgba(255, 255, 255, 0.01);
+            transition: all 0.2s ease;
+        }
+
+        .upload-box:hover, .upload-box.dragover {
+            border-color: var(--accent-color);
+            background: var(--accent-light);
+        }
+
+        .upload-box.loaded {
+            border-style: solid;
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .upload-box input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .box-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .box-status {
+            font-size: 13px;
+            color: var(--text-secondary);
+            word-break: break-all;
+        }
+
+        .box-status.active {
+            color: var(--accent-color);
+            font-weight: 500;
+        }
+
+        /* Botones */
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--accent-color);
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 500;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 12px 20px;
+            width: 100%;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .btn:hover:not(:disabled) {
+            background-color: var(--accent-hover);
+        }
+
+        .btn:disabled {
+            background-color: #2c2c2e;
+            color: #636366;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: #2c2c2e;
+            color: var(--text-primary);
+            font-size: 13px;
+            padding: 8px 14px;
+            width: auto;
+        }
+
+        .btn-secondary:hover {
+            background-color: #3a3a3c;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .stat-value.highlight {
+            color: var(--danger-color);
+        }
+
+        .controls-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            background: #101012;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            width: 200px;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-color);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .results-list {
+            background: #101012;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-md);
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .user-row {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--card-border);
+            font-size: 14px;
+        }
+
+        .user-row:last-child {
+            border-bottom: none;
+        }
+
+        .user-row a {
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .user-row a:hover {
+            color: var(--accent-color);
+        }
+
+        .empty-state {
+            padding: 30px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        @media (max-width: 580px) {
+            .upload-grid, .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .controls-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="logo">followback.</div>
+            <p class="subtitle">Descubre quién no te devuelve el follow.</p>
+        </header>
+
+        <div class="card" id="uploadCard">
+            <div class="upload-grid">
+                <div class="upload-box" id="boxFollowers">
+                    <div class="box-title">1. Seguidores (Followers)</div>
+                    <div class="box-status" id="statusFollowers">Seleccionar o arrastrar archivo</div>
+                    <input type="file" id="inputFollowers" accept=".html,.htm,.json,.txt" multiple>
+                </div>
+
+                <div class="upload-box" id="boxFollowing">
+                    <div class="box-title">2. Seguidos (Following)</div>
+                    <div class="box-status" id="statusFollowing">Seleccionar o arrastrar archivo</div>
+                    <input type="file" id="inputFollowing" accept=".html,.htm,.json,.txt" multiple>
+                </div>
+            </div>
+
+            <button class="btn" id="compareBtn" disabled>Comparar listas</button>
+        </div>
+
+        <div class="card dashboard" id="dashboardCard">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-title">Seguidos</div>
+                    <div class="stat-value" id="countFollowing">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Seguidores</div>
+                    <div class="stat-value" id="countFollowers">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">No te siguen</div>
+                    <div class="stat-value highlight" id="countNotFollowing">0</div>
+                </div>
+            </div>
+
+            <div class="controls-header">
+                <input type="text" class="search-input" id="searchInput" placeholder="Buscar usuario...">
+                <div class="action-btns">
+                    <button class="btn btn-secondary" id="copyBtn">Copiar lista</button>
+                    <button class="btn btn-secondary" id="downloadBtn">Descargar CSV</button>
+                    <button class="btn btn-secondary" id="resetBtn">Reiniciar</button>
+                </div>
+            </div>
+
+            <div class="results-list" id="resultsList"></div>
+        </div>
+    </div>
+
+    <script>
+        const state = {
+            followers: new Set(),
+            following: new Set(),
+            notFollowingBack: [],
+            filtered: []
+        };
+
+        const inputFollowers = document.getElementById('inputFollowers');
+        const inputFollowing = document.getElementById('inputFollowing');
+        const boxFollowers = document.getElementById('boxFollowers');
+        const boxFollowing = document.getElementById('boxFollowing');
+        const statusFollowers = document.getElementById('statusFollowers');
+        const statusFollowing = document.getElementById('statusFollowing');
+        const compareBtn = document.getElementById('compareBtn');
+
+        const uploadCard = document.getElementById('uploadCard');
+        const dashboardCard = document.getElementById('dashboardCard');
+        const countFollowing = document.getElementById('countFollowing');
+        const countFollowers = document.getElementById('countFollowers');
+        const countNotFollowing = document.getElementById('countNotFollowing');
+        const resultsList = document.getElementById('resultsList');
+        const searchInput = document.getElementById('searchInput');
+
+        inputFollowers.addEventListener('change', async (e) => {
+            state.followers = await processFiles(e.target.files);
+            updateBoxState(boxFollowers, statusFollowers, state.followers.size, e.target.files);
+            checkReady();
+        });
+
+        inputFollowing.addEventListener('change', async (e) => {
+            state.following = await processFiles(e.target.files);
+            updateBoxState(boxFollowing, statusFollowing, state.following.size, e.target.files);
+            checkReady();
+        });
+
+        function updateBoxState(box, statusEl, count, files) {
+            if (count > 0) {
+                box.classList.add('loaded');
+                statusEl.textContent = `${count.toLocaleString()} usuarios (${files.length} archivo/s)`;
+                statusEl.classList.add('active');
+            } else {
+                box.classList.remove('loaded');
+                statusEl.textContent = 'Seleccionar o arrastrar archivo';
+                statusEl.classList.remove('active');
+            }
+        }
+
+        function checkReady() {
+            compareBtn.disabled = !(state.followers.size > 0 && state.following.size > 0);
+        }
+
+        async function processFiles(files) {
+            const usernames = new Set();
+            for (let file of files) {
+                const text = await file.text();
+                const fname = file.name.toLowerCase();
+
+                if (fname.endsWith('.json')) {
+                    try {
+                        const json = JSON.parse(text);
+                        extractFromJson(json, usernames);
+                    } catch (err) {
+                        parseHTMLContent(text, usernames);
+                    }
+                } else {
+                    parseHTMLContent(text, usernames);
+                }
+            }
+            return usernames;
+        }
+
+        // PARSER ESPECÍFICO PARA HTML
+        function parseHTMLContent(htmlText, usernamesAcc) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
+            const links = doc.querySelectorAll('a');
+
+            // 1. Extraer a través de enlaces <a> (Formato oficial HTML de Instagram)
+            links.forEach(a => {
+                const href = a.getAttribute('href') || '';
+                const text = a.textContent || '';
+
+                // Extrae usuario desde URL: instagram.com/username o instagram.com/_u/username
+                const matchHref = href.match(/instagram\.com\/(?:_u\/)?([a-zA-Z0-9_.]+)/i);
+                if (matchHref) {
+                    addIfValid(matchHref[1], usernamesAcc);
+                }
+
+                // Extrae del texto visible dentro del enlace si coincide con formato de usuario
+                addIfValid(text, usernamesAcc);
+            });
+
+            // 2. Extraer texto plano por Regex en caso de que no haya estructura <a>
+            const regex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:_u\/)?([a-zA-Z0-9_.]+)/gi;
+            let match;
+            while ((match = regex.exec(htmlText)) !== null) {
+                addIfValid(match[1], usernamesAcc);
+            }
+        }
+
+        function extractFromJson(obj, acc) {
+            if (!obj) return;
+            if (Array.isArray(obj)) {
+                obj.forEach(item => extractFromJson(item, acc));
+            } else if (typeof obj === 'object') {
+                if (obj.value && typeof obj.value === 'string') {
+                    addIfValid(obj.value, acc);
+                }
+                for (let k in obj) {
+                    extractFromJson(obj[k], acc);
+                }
+            }
+        }
+
+        function addIfValid(username, acc) {
+            if (!username) return;
+            const clean = username.replace(/^@/, '').trim().toLowerCase();
+            const reserved = [
+                'explore', 'reels', 'stories', 'p', 'reel', 'tv', 'developer', 
+                'about', 'help', 'privacy', 'terms', 'locations', 'accounts', 
+                'login', 'signup', 'direct', 'challenge'
+            ];
+            
+            if (clean && clean.length <= 30 && /^[a-zA-Z0-9_.]+$/.test(clean) && !reserved.includes(clean)) {
+                acc.add(clean);
+            }
+        }
+
+        compareBtn.addEventListener('click', () => {
+            state.notFollowingBack = Array.from(state.following)
+                .filter(user => !state.followers.has(user))
+                .sort();
+
+            state.filtered = [...state.notFollowingBack];
+
+            countFollowing.textContent = state.following.size.toLocaleString();
+            countFollowers.textContent = state.followers.size.toLocaleString();
+            countNotFollowing.textContent = state.notFollowingBack.length.toLocaleString();
+
+            uploadCard.style.display = 'none';
+            dashboardCard.style.display = 'block';
+
+            renderList();
+        });
+
+        function renderList() {
+            if (state.filtered.length === 0) {
+                resultsList.innerHTML = `<div class="empty-state">${state.notFollowingBack.length === 0 ? 'Todos los usuarios que sigues te siguen de vuelta.' : 'No se encontraron resultados.'}</div>`;
+                return;
+            }
+
+            resultsList.innerHTML = state.filtered.map(user => `
+                <div class="user-row">
+                    <a href="https://instagram.com/${user}" target="_blank" rel="noopener">@${user}</a>
+                </div>
+            `).join('');
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase().trim();
+            state.filtered = state.notFollowingBack.filter(u => u.includes(q));
+            renderList();
+        });
+
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            if (!state.notFollowingBack.length) return;
+            navigator.clipboard.writeText(state.notFollowingBack.map(u => `@${u}`).join('\n')).then(() => {
+                const btn = document.getElementById('copyBtn');
+                btn.textContent = '¡Copiado!';
+                setTimeout(() => btn.textContent = 'Copiar lista', 2000);
+            });
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            if (!state.notFollowingBack.length) return;
+            const blob = new Blob(["username\n" + state.notFollowingBack.join('\n')], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'no-te-siguen.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            state.followers.clear();
+            state.following.clear();
+            state.notFollowingBack = [];
+            state.filtered = [];
+
+            inputFollowers.value = '';
+            inputFollowing.value = '';
+            searchInput.value = '';
+
+            updateBoxState(boxFollowers, statusFollowers, 0, []);
+            updateBoxState(boxFollowing, statusFollowing, 0, []);
+            checkReady();
+
+            dashboardCard.style.display = 'none';
+            uploadCard.style.display = 'block';
+        });
+    </script>
+</body>
+</html>
